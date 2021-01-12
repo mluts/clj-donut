@@ -76,60 +76,60 @@
         output (atom {})
         ]
     (doseq [theta (range 0 (* 2 Math/PI) (:theta-spacing conf))
-            phi   (range 0 (* 2 Math/PI) (:phi-spacing conf))
             :let [cos-theta (Math/cos theta)
                   sin-theta (Math/sin theta)
                   rcos0 (* (:r1 conf) cos-theta)
                   rcos (+ (:r2 conf) rcos0)
-                  rsin (* (:r1 conf) sin-theta)
+                  rsin (* (:r1 conf) sin-theta) ]]
+      (doseq [phi   (range 0 (* 2 Math/PI) (:phi-spacing conf))
+              :let [cos-phi (Math/cos phi)
+                    sin-phi (Math/sin phi)
 
-                  cos-phi (Math/cos phi)
-                  sin-phi (Math/sin phi)
+                    z (+ (:k2 conf) (- (* cos-rx sin-phi rcos) (* rsin sin-rx)))
 
-                  z (+ (:k2 conf) (- (* cos-rx sin-phi rcos) (* rsin sin-rx)))
+                    ooz (/ 1 z)
 
-                  ooz (/ 1 z)
+                    x (+ (* rsin cos-rx sin-rz)
+                         (* rcos (+ (* sin-rx sin-phi sin-rz) (* cos-phi cos-rz))))
 
-                  x (+ (* rsin cos-rx sin-rz)
-                       (* rcos (+ (* sin-rx sin-phi sin-rz) (* cos-phi cos-rz))))
+                    y (+ (* rsin cos-rx cos-rz)
+                         (* rcos (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz))))
 
-                  y (+ (* rsin cos-rx cos-rz)
-                       (* rcos (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz))))
+                    ; norm (max
+                    ;        (Math/abs (- (* rsin sin-rx) (* rcos0 cos-rx sin-phi)))
+                    ;        (Math/abs (+ (* rsin cos-rx cos-rz) (* rcos0 (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz)))))
+                    ;        (Math/abs (+ (* rsin cos-rx sin-rz) (* rcos0 (+ (* sin-rx sin-phi sin-rz) (* cos-phi cos-rz))))))
 
-                  norm (max
-                         (Math/abs (- (* rsin sin-rx) (* rcos0 cos-rx sin-phi)))
-                         (Math/abs (+ (* rsin cos-rx cos-rz) (* rcos0 (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz)))))
-                         (Math/abs (+ (* rsin cos-rx sin-rz) (* rcos0 (+ (* sin-rx sin-phi sin-rz) (* cos-phi cos-rz))))))
+                    ; L (- (/ (+ (* rsin cos-rx cos-rz)
+                    ;            (* rcos0 (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz))))
+                    ;         norm)
+                    ;      (/ (- (* rcos0 cos-rx sin-phi) (* rsin sin-rx))
+                    ;         norm))
+                    L (- (+ (* rsin cos-rx cos-rz)
+                            (* rcos0 (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz))))
+                         (- (* rcos0 cos-rx sin-phi) (* rsin sin-rx))
+                         )
 
-                  ; L (- (/ (+ (* rsin cos-rx cos-rz)
-                  ;            (* rcos0 (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz))))
-                  ;         norm)
-                  ;      (/ (- (* rcos0 cos-rx sin-phi) (* rsin sin-rx))
-                  ;         norm))
-                  L (- (+ (* rsin cos-rx cos-rz)
-                          (* rcos0 (- (* sin-rx sin-phi cos-rz) (* cos-phi sin-rz))))
-                       (- (* rcos0 cos-rx sin-phi) (* rsin sin-rx))
-                       )
+                    xp (x-proj x ooz)
+                    yp (y-proj y ooz)
+                    ]]
 
-                  xp (x-proj x ooz)
-                  yp (y-proj y ooz)
-                  ]]
-      (when (and (< 0 L)
-                 (> ooz (or (get-in @zbuf [xp yp]) 0))
-                 (<= 0 xp (:cols conf))
-                 (<= 0 yp (:rows conf)))
-        ; (println L)
-        (swap! zbuf assoc-in [xp yp] ooz)
-        (swap! output assoc-in [xp yp] L))
-      )
+        (when (and (< 0 L)
+                   (> ooz (or (get-in @zbuf [xp yp]) 0))
+                   (<= 0 xp (:cols conf))
+                   (<= 0 yp (:rows conf)))
+          ; (println L)
+          (swap! zbuf assoc-in [xp yp] ooz)
+          (swap! output assoc-in [xp yp] L))
+        ))
 
 
     (doseq [[x ys] @output
             [y L] ys]
       (let [L (int (* 8 L))]
         (when (<= 0 L 11)
-         (term-cursor-pos y x)
-         (print (nth (:luminance-chars conf) L))))
+          (term-cursor-pos y x)
+          (print (nth (:luminance-chars conf) L))))
       )
     )
 
