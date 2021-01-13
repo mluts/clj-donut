@@ -124,17 +124,26 @@
         ))
 
 
-    (doseq [[x ys] @output
-            [y L] ys]
-      (let [L (int (* 8 L))]
-        (when (<= 0 L 11)
-          (term-cursor-pos y x)
-          (print (nth (:luminance-chars conf) L))))
-      )
+    (term-cursor-pos 0 0)
+    (dotimes [y (:rows conf)]
+      (dotimes [x (:cols conf)]
+        (let [L (long (* 8 (or (get-in @output [x y]) 0)))]
+         (if (<= 0 L 11)
+           (print (nth (:luminance-chars conf) L))
+           (print " "))
+         )))
+
+
+    ; (doseq [[x ys] @output
+    ;         [y L] ys]
+    ;   (let [L (int (* 8 L))]
+    ;     (when (<= 0 L 11)
+    ;       (term-cursor-pos y x)
+    ;       (print (nth (:luminance-chars conf) L))))
+    ;   )
     )
 
 
-  (term-cursor-pos 0 0)
   )
 
 (defn clock []
